@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plataforma de Estudos - V4</title>
+    <!-- Inclui o Tailwind CSS para estilização rápida e responsiva -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Configuração do Tailwind para usar a fonte Inter e cores personalizadas -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: '#6B46C1', // Roxo vibrante
+                        secondary: '#FFC107', // Amarelo para destaque
+                        accent: '#20C997', // Verde menta para sucesso
+                        background: '#F0F2F5', // Cinza claro para fundo
+                        textlight: '#FFFFFF', // Texto branco
+                        textdark: '#333333', // Texto escuro
+                        optionbg: '#E0E7FF', // Azul claro para opções
+                        optionborder: '#C7D2FE', // Azul mais escuro para borda da opção
+                        correct: '#D1FAE5', // Fundo verde claro para resposta correta
+                        wrong: '#FEE2E2', // Fundo vermelho claro para resposta errada
+                        bordercorrect: '#34D399', // Borda verde para correto
+                        borderwrong: '#EF4444', // Borda vermelha para errado
+                        graytext: '#6B7280', // Texto cinza para descrições
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Define a fonte Inter diretamente para garantir que seja aplicada */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F0F2F5; /* Cor de fundo principal */
+        }
+        /* Animação simples para a caixa de motivação */
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.7;
+            }
+        }
+        .animate-pulse-custom {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4 sm:p-6 lg:p-8 bg-background">
+    <div class="w-full max-w-5xl bg-white rounded-2xl shadow-xl p-6 sm:p-8 lg:p-10 flex flex-col md:flex-row gap-6">
+        <!-- Seção de Navegação/Informações (Painel Lateral) -->
+        <div class="md:w-1/3 flex flex-col items-center p-4 bg-primary text-textlight rounded-xl shadow-lg transform transition-all duration-300 hover:scale-105">
+            <h2 class="text-3xl sm:text-4xl font-bold mb-4 text-center">📚 Meu Painel!</h2>
+            <div class="text-center mb-6">
+                <p class="text-lg">Olá, estudante!</p>
+                <p class="text-md">Vamos explorar as matérias!</p>
+            </div>
+
+            <!-- Pontuação Atual -->
+            <div class="w-full bg-primary-dark p-4 rounded-xl mb-6 shadow-inner">
+                <p class="text-xl font-semibold text-center mb-2">Sua Pontuação Total:</p>
+                <p id="scoreDisplay" class="text-5xl font-extrabold text-secondary text-center">0</p>
+            </div>
+
+            <!-- Streak Diário -->
+            <div class="w-full bg-primary-dark p-4 rounded-xl mb-6 shadow-inner">
+                <p class="text-xl font-semibold text-center mb-2">🔥 Streak Diário:</p>
+                <p id="streakDisplay" class="text-5xl font-extrabold text-accent text-center">0</p>
+                <p class="text-sm text-center mt-2">Sequência de acertos!</p>
+            </div>
+
+            <!-- Barra de Progresso do Módulo Ativo -->
+            <div class="w-full mb-6" id="activeModuleProgressSection">
+                <p class="text-xl font-semibold text-center mb-2">Progresso no Módulo Atual:</p>
+                <div class="w-full bg-gray-300 rounded-full h-4 sm:h-5 overflow-hidden shadow-inner">
+                    <div id="moduleProgressBar" class="bg-accent h-full rounded-full transition-all duration-500 ease-out" style="width: 0%;"></div>
+                </div>
+                <p id="moduleProgressText" class="text-sm text-center mt-2">0/0 Perguntas</p>
+            </div>
+
+            <!-- Mensagens de Feedback/Motivação -->
+            <div id="motivationBox" class="w-full bg-white text-textdark p-4 rounded-lg shadow-md text-center text-sm hidden animate-pulse-custom">
+                "Excelente trabalho! Mantenha o ritmo para alcançar seus objetivos!"
+            </div>
+
+            <!-- Seção de Comunidade/Colaboração (Simulada) -->
+            <div class="w-full bg-white text-textdark p-4 rounded-xl shadow-md mt-6 text-center">
+                <h3 class="text-xl font-bold mb-2">Comunidade</h3>
+                <p class="text-gray-700 text-sm mb-3">Conecte-se com outros estudantes e tire suas dúvidas!</p>
+                <!-- Ícone simulando chat/fórum (usando um emoji para simplicidade) -->
+                <p class="text-4xl">💬👥</p>
+                <p class="text-sm text-gray-500 mt-2">Fóruns de discussão e grupos de estudo</p>
+            </div>
+            <!-- Botão para voltar à lista de matérias -->
+            <button id="backToSubjectsButton" class="bg-indigo-600 text-textlight font-bold py-3 px-8 rounded-full shadow-lg hover:shadow-xl hover:bg-indigo-700 transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-indigo-300 mt-6 hidden">
+                Voltar às Matérias
+            </button>
+        </div>
+
+        <!-- Seção Principal de Conteúdo -->
+        <div class="md:w-2/3 flex flex-col justify-between bg-white p-4 sm:p-6 rounded-xl shadow-lg">
+
+            <!-- Tela de Lista de Matérias -->
+            <div id="subjectListView" class="flex flex-col flex-grow items-center justify-center transition-opacity duration-500">
+                <h1 class="text-2xl sm:text-3xl font-bold text-center text-primary mb-6">Selecione uma Matéria</h1>
+                <div id="subjectsContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6 w-full max-w-2xl">
+                    <!-- Cards das matérias serão injetados aqui -->
+                </div>
+            </div>
+
+            <!-- Tela de Lista de Módulos (para uma matéria selecionada) -->
+            <div id="moduleListView" class="hidden flex-col flex-grow items-center justify-center transition-opacity duration-500">
+                <h1 id="moduleListTitle" class="text-2xl sm:text-3xl font-bold text-center text-primary mb-6">Módulos de [Matéria]</h1>
+                <div id="modulesContainer" class="grid grid-cols-1 gap-4 w-full max-w-2xl">
+                    <!-- Cards dos módulos serão injetados aqui -->
+                </div>
+                 <button id="backToSubjectsFromModulesButton" class="bg-gray-400 text-textdark font-bold py-3 px-8 rounded-full shadow-lg hover:shadow-xl hover:bg-gray-500 transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-gray-300 mt-6">
+                    Voltar às Matérias
+                </button>
+            </div>
+
+            <!-- Tela de Conteúdo/Material (simulado) -->
+            <div id="materialView" class="hidden flex-col flex-grow items-center justify-center transition-opacity duration-500 text-center">
+                <h2 id="materialTitle" class="text-3xl sm:text-4xl font-bold text-primary mb-4">Título do Material</h2>
+                <p id="materialType" class="text-lg text-gray-700 mb-6">Tipo: Vídeo</p>
+                <div class="w-full bg-gray-200 rounded-xl p-8 flex flex-col items-center justify-center shadow-inner h-64">
+                    <p class="text-gray-500 text-xl mb-4">Conteúdo do material (simulado)</p>
+                    <p class="text-gray-400">Aqui seria incorporado um vídeo, um PDF ou texto completo.</p>
+                </div>
+                <button id="backToModulesFromMaterialButton" class="bg-gray-400 text-textdark font-bold py-3 px-8 rounded-full shadow-lg hover:shadow-xl hover:bg-gray-500 transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-gray-300 mt-8">
+                    Voltar aos Módulos
+                </button>
+            </div>
+
+            <!-- Área da Pergunta e Opções (Quiz) -->
+            <div id="quizContainer" class="hidden flex-col flex-grow items-center justify-center transition-opacity duration-500">
+                <h2 id="quizModuleTitle" class="text-2xl sm:text-3xl font-bold text-center text-primary mb-6">Quiz do Módulo: [Nome do Módulo]</h2>
+                <p id="questionDisplay" class="text-xl sm:text-2xl font-semibold text-textdark mb-6 text-center leading-relaxed">Carregando pergunta...</p>
+                <div id="optionsContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-lg mb-8">
+                    <!-- As opções serão injetadas aqui pelo JavaScript -->
+                </div>
+                <button id="nextQuestionButton" class="bg-secondary text-textdark font-bold py-3 px-8 rounded-full shadow-lg hover:shadow-xl hover:bg-yellow-500 transition-all duration-300 transform hover:scale-105 hidden focus:outline-none focus:ring-4 focus:ring-yellow-300">
+                    Próxima Pergunta
+                </button>
+            </div>
+
+            <!-- Tela Final do Quiz -->
+            <div id="quizEndScreen" class="hidden flex-col flex-grow items-center justify-center transition-opacity duration-500 text-center">
+                <h2 class="text-3xl sm:text-4xl font-bold text-accent mb-4">🎉 Desafio Concluído!</h2>
+                <p class="text-xl text-textdark mb-6">Você completou as perguntas deste módulo!</p>
+
+                <!-- Sumário de Desempenho -->
+                <div class="bg-gray-100 p-4 rounded-xl mb-6 w-full max-w-sm shadow-inner">
+                    <p class="text-lg font-semibold text-primary mb-2">Seu Desempenho no Módulo:</p>
+                    <p class="text-md text-green-600">Acertos: <span id="correctAnswersSummary" class="font-bold">0</span></p>
+                    <p class="text-md text-red-600">Erros: <span id="incorrectAnswersSummary" class="font-bold">0</span></p>
+                </div>
+
+                <p class="text-2xl font-bold text-primary mb-8">Sua Pontuação Total: <span id="finalScoreDisplay" class="text-secondary text-5xl">0</span></p>
+                <button id="restartQuizButton" class="bg-primary text-textlight font-bold py-3 px-8 rounded-full shadow-lg hover:shadow-xl hover:bg-indigo-700 transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-indigo-300">
+                    Tentar Novamente (Módulo Atual)
+                </button>
+                 <button id="nextModuleButton" class="bg-accent text-textdark font-bold py-3 px-8 mt-4 rounded-full shadow-lg hover:shadow-xl hover:bg-green-600 transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-green-300">
+                    Ir para o Próximo Módulo
+                </button>
+                <button id="backToModulesFromQuizEndButton" class="bg-gray-400 text-textdark font-bold py-3 px-8 rounded-full shadow-lg hover:shadow-xl hover:bg-gray-500 transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-gray-300 mt-4">
+                    Voltar aos Módulos
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Estrutura de dados para as matérias, módulos, materiais e quizzes
+        const subjects = [
+            {
+                id: 'matematica',
+                name: 'Matemática',
+                icon: '📐',
+                description: 'Explore o mundo dos números, da lógica e das formas. Essencial para o raciocínio!',
+                modules: [
+                    {
+                        id: 'mat-mod1',
+                        name: 'Módulo 1: Fundamentos da Aritmética',
+                        description: 'Revise operações básicas e conceitos numéricos.',
+                        materials: [
+                            { type: 'video', title: 'Vídeo: Adição e Subtração', url: '#' },
+                            { type: 'text', title: 'Artigo: Multiplicação e Divisão', url: '#' }
+                        ],
+                        quiz: {
+                            questions: [
+                                { question: "Quanto é 7 + 5?", options: ["10", "11", "12", "13"], answer: "12" },
+                                { question: "Qual o resultado de 9 x 3?", options: ["24", "27", "30", "36"], answer: "27" }
+                            ]
+                        }
+                    },
+                    {
+                        id: 'mat-mod2',
+                        name: 'Módulo 2: Introdução à Álgebra',
+                        description: 'Compreenda variáveis e expressões algébricas simples.',
+                        materials: [
+                            { type: 'video', title: 'Vídeo: O que é Álgebra?', url: '#' },
+                            { type: 'text', title: 'PDF: Exercícios de Equações', url: '#' }
+                        ],
+                        quiz: {
+                            questions: [
+                                { question: "Se x = 5, quanto é 2x + 3?", options: ["10", "13", "12", "15"], answer: "13" },
+                                { question: "Qual o valor de y em y - 4 = 6?", options: ["2", "10", "8", "14"], answer: "10" }
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                id: 'portugues',
+                name: 'Português',
+                icon: '📚',
+                description: 'Aprimore sua escrita, leitura e compreensão da língua portuguesa.',
+                modules: [
+                    {
+                        id: 'port-mod1',
+                        name: 'Módulo 1: Gramática Essencial',
+                        description: 'Regras básicas de ortografia e pontuação.',
+                        materials: [
+                            { type: 'video', title: 'Vídeo: Uso da Vírgula', url: '#' },
+                            { type: 'text', title: 'Artigo: Guia Rápido de Acentuação', url: '#' }
+                        ],
+                        quiz: {
+                            questions: [
+                                { question: "Qual a palavra corretamente acentuada?", options: ["cafe", "cajá", "avo", "papeis"], answer: "cajá" },
+                                { question: "Qual o plural de 'cão'?", options: ["cões", "cãos", "cães", "cãis"], answer: "cães" }
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                id: 'historia',
+                name: 'História',
+                icon: '🏛️',
+                description: 'Viaje no tempo e explore os eventos que moldaram o mundo.',
+                modules: [
+                    {
+                        id: 'hist-mod1',
+                        name: 'Módulo 1: O Brasil Colonial',
+                        description: 'A chegada dos portugueses e os primeiros anos da colônia.',
+                        materials: [
+                            { type: 'video', title: 'Vídeo: Descobrimento do Brasil', url: '#' },
+                            { type: 'text', title: 'Artigo: Ciclo da Cana-de-Açúcar', url: '#' }
+                        ],
+                        quiz: {
+                            questions: [
+                                { question: "Em que ano o Brasil foi descoberto?", options: ["1492", "1500", "1534", "1822"], answer: "1500" }
+                            ]
+                        }
+                    }
+                ]
+            }
+        ];
+
+        // Variáveis de estado global
+        let currentSubject = null; // Objeto da matéria atualmente selecionada
+        let currentModule = null;  // Objeto do módulo atualmente selecionado
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let streak = 0;
+        let correctAnswersInModule = 0;
+        let incorrectAnswersInModule = 0;
+        let selectedOptionElement = null;
+        let isAnswerChecked = false;
+
+        // Referências aos elementos do DOM
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const streakDisplay = document.getElementById('streakDisplay');
+        const moduleProgressBar = document.getElementById('moduleProgressBar');
+        const moduleProgressText = document.getElementById('moduleProgressText');
+        const motivationBox = document.getElementById('motivationBox');
+
+        // Main views
+        const subjectListView = document.getElementById('subjectListView');
+        const moduleListView = document.getElementById('moduleListView');
+        const materialView = document.getElementById('materialView');
+        const quizContainer = document.getElementById('quizContainer');
+        const quizEndScreen = document.getElementById('quizEndScreen');
+
+        // Elements within views
+        const subjectsContainer = document.getElementById('subjectsContainer');
+        const moduleListTitle = document.getElementById('moduleListTitle');
+        const modulesContainer = document.getElementById('modulesContainer');
+        const questionDisplay = document.getElementById('questionDisplay');
+        const optionsContainer = document.getElementById('optionsContainer');
+        const nextQuestionButton = document.getElementById('nextQuestionButton');
+        const finalScoreDisplay = document.getElementById('finalScoreDisplay');
+        const restartQuizButton = document.getElementById('restartQuizButton');
+        const nextModuleButton = document.getElementById('nextModuleButton');
+        const correctAnswersSummary = document.getElementById('correctAnswersSummary');
+        const incorrectAnswersSummary = document.getElementById('incorrectAnswersSummary');
+        const materialTitle = document.getElementById('materialTitle');
+        const materialType = document.getElementById('materialType');
+        const quizModuleTitle = document.getElementById('quizModuleTitle');
+
+        // Navigation buttons
+        const backToSubjectsButton = document.getElementById('backToSubjectsButton');
+        const backToSubjectsFromModulesButton = document.getElementById('backToSubjectsFromModulesButton');
+        const backToModulesFromMaterialButton = document.getElementById('backToModulesFromMaterialButton');
+        const backToModulesFromQuizEndButton = document.getElementById('backToModulesFromQuizEndButton');
+        const activeModuleProgressSection = document.getElementById('activeModuleProgressSection');
+
+
+        // Mensagens motivacionais
+        const motivationalMessages = [
+            "Excelente trabalho! Mantenha o ritmo para alcançar seus objetivos!",
+            "Você está arrasando! Cada resposta correta te leva mais longe.",
+            "Continue assim! O aprendizado é uma jornada incrível.",
+            "Não desanime! Cada erro é uma oportunidade para aprender e crescer. Revise o conteúdo!",
+            "Impressionante! Sua dedicação está dando frutos. Explore os recursos adicionais!",
+            "Quase lá! Foco e persistência te levarão ao sucesso. Que tal discutir com a comunidade?",
+            "Genial! Sua inteligência brilha a cada desafio. Experimente os diferentes formatos de conteúdo!"
+        ];
+
+        /**
+         * Exibe uma mensagem na caixa de feedback/motivação.
+         * @param {string} message - A mensagem a ser exibida.
+         * @param {string} type - O tipo da mensagem ('success', 'error', 'info').
+         */
+        function showMotivationMessage(message, type = 'info') {
+            motivationBox.textContent = message;
+            motivationBox.classList.remove('hidden', 'bg-correct', 'bg-wrong', 'bg-white', 'text-red-800', 'text-textlight', 'text-textdark', 'animate-pulse-custom');
+            motivationBox.classList.add('block'); // Garante que a caixa de mensagem seja visível
+
+            if (type === 'success') {
+                motivationBox.classList.add('bg-accent', 'text-textlight');
+            } else if (type === 'error') {
+                motivationBox.classList.add('bg-wrong', 'text-red-800');
+            } else { // 'info' ou padrão
+                motivationBox.classList.add('bg-white', 'text-textdark', 'animate-pulse-custom');
+            }
+
+            // Oculta a mensagem após alguns segundos, mas mantém a última mensagem "padrão" visível.
+            if (type !== 'info') {
+                setTimeout(() => {
+                    motivationBox.classList.add('hidden');
+                    motivationBox.classList.remove('bg-correct', 'bg-wrong', 'text-red-800', 'text-textlight', 'bg-accent', 'animate-pulse-custom');
+                }, 3000);
+            }
+        }
+
+        /**
+         * Alterna a visibilidade das diferentes seções de conteúdo.
+         * @param {HTMLElement} showElement - O elemento a ser exibido.
+         */
+        function showView(showElement) {
+            // Esconde todas as views primeiro
+            subjectListView.classList.add('hidden');
+            moduleListView.classList.add('hidden');
+            materialView.classList.add('hidden');
+            quizContainer.classList.add('hidden');
+            quizEndScreen.classList.add('hidden');
+
+            // Exibe o elemento desejado
+            showElement.classList.remove('hidden');
+            showElement.classList.add('flex'); // Garante que seja um flex container para centralização
+        }
+
+        /**
+         * Renderiza a lista de matérias.
+         */
+        function renderSubjects() {
+            showView(subjectListView);
+            subjectsContainer.innerHTML = '';
+            backToSubjectsButton.classList.add('hidden'); // Esconde o botão de voltar para matérias se já está na tela de matérias
+            activeModuleProgressSection.classList.add('hidden'); // Esconde a barra de progresso do módulo
+            
+            subjects.forEach(subject => {
+                const subjectCard = document.createElement('div');
+                subjectCard.classList.add(
+                    'bg-white', 'rounded-xl', 'shadow-md', 'p-6', 'cursor-pointer',
+                    'hover:shadow-lg', 'hover:scale-105', 'transition-all', 'duration-300',
+                    'flex', 'flex-col', 'items-center', 'text-center', 'border-2', 'border-primary'
+                );
+                subjectCard.innerHTML = `
+                    <p class="text-6xl mb-4">${subject.icon}</p>
+                    <h3 class="text-xl font-bold text-primary mb-2">${subject.name}</h3>
+                    <p class="text-graytext text-sm">${subject.description}</p>
+                `;
+                subjectCard.addEventListener('click', () => renderModules(subject));
+                subjectsContainer.appendChild(subjectCard);
+            });
+        }
+
+        /**
+         * Renderiza a lista de módulos para uma matéria selecionada.
+         * @param {object} subject - O objeto da matéria selecionada.
+         */
+        function renderModules(subject) {
+            currentSubject = subject;
+            showView(moduleListView);
+            moduleListTitle.textContent = `Módulos de ${subject.name}`;
+            modulesContainer.innerHTML = '';
+            backToSubjectsButton.classList.remove('hidden'); // Mostra o botão de voltar para matérias
+            activeModuleProgressSection.classList.add('hidden'); // Esconde a barra de progresso do módulo
+
+            subject.modules.forEach((module, index) => {
+                const moduleCard = document.createElement('div');
+                moduleCard.classList.add(
+                    'bg-white', 'rounded-xl', 'shadow-md', 'p-6', 'border-2', 'border-optionborder',
+                    'flex', 'flex-col', 'gap-3', 'hover:shadow-lg', 'transition-all', 'duration-300'
+                );
+                moduleCard.innerHTML = `
+                    <h3 class="text-xl font-bold text-textdark">${module.name}</h3>
+                    <p class="text-graytext text-sm mb-2">${module.description}</p>
+                    <div class="flex flex-wrap gap-2 mb-4">
+                        ${module.materials.map(material => `
+                            <button class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full hover:bg-blue-200 transition-colors"
+                                onclick="showMaterial(${JSON.stringify(material).replace(/"/g, '&quot;')})">
+                                ${material.type === 'video' ? '▶️ Vídeo' : '📄 Artigo'}
+                            </button>
+                        `).join('')}
+                    </div>
+                    <button class="bg-accent text-textdark font-bold py-2 px-4 rounded-full shadow-md hover:bg-green-600 hover:text-textlight transition-all"
+                        onclick="startQuiz(${index})">
+                        Iniciar Quiz
+                    </button>
+                `;
+                modulesContainer.appendChild(moduleCard);
+            });
+        }
+
+        /**
+         * Exibe o material de apoio.
+         * @param {object} material - O objeto do material a ser exibido.
+         */
+        function showMaterial(material) {
+            showView(materialView);
+            materialTitle.textContent = material.title;
+            materialType.textContent = `Tipo: ${material.type === 'video' ? 'Vídeo' : 'Artigo'}`;
+            backToSubjectsButton.classList.remove('hidden'); // Mostra o botão de voltar para matérias
+            activeModuleProgressSection.classList.add('hidden'); // Esconde a barra de progresso do módulo
+        }
+
+        /**
+         * Inicia o quiz para um módulo específico.
+         * @param {number} moduleIndex - O índice do módulo dentro da matéria atual.
+         */
+        function startQuiz(moduleIndex) {
+            currentModule = currentSubject.modules[moduleIndex];
+            currentQuestionIndex = 0;
+            correctAnswersInModule = 0;
+            incorrectAnswersInModule = 0;
+            showView(quizContainer);
+            quizModuleTitle.textContent = `Quiz do Módulo: ${currentModule.name}`;
+            backToSubjectsButton.classList.remove('hidden'); // Mostra o botão de voltar para matérias
+            activeModuleProgressSection.classList.remove('hidden'); // Mostra a barra de progresso do módulo
+            loadQuestion();
+        }
+
+        /**
+         * Carrega a próxima pergunta no display ou encerra o quiz do módulo.
+         */
+        function loadQuestion() {
+            optionsContainer.querySelectorAll('button').forEach(btn => btn.disabled = false);
+            isAnswerChecked = false; // Reseta o estado de verificação da resposta
+
+            if (currentModule && currentQuestionIndex < currentModule.quiz.questions.length) {
+                const currentQuestion = currentModule.quiz.questions[currentQuestionIndex];
+                questionDisplay.textContent = currentQuestion.question;
+                optionsContainer.innerHTML = ''; // Limpa as opções anteriores
+                nextQuestionButton.classList.add('hidden'); // Esconde o botão de próxima pergunta
+
+                currentQuestion.options.forEach(option => {
+                    const button = document.createElement('button');
+                    button.textContent = option;
+                    button.classList.add(
+                        'w-full', 'py-3', 'px-4', 'bg-optionbg', 'border-2', 'border-optionborder',
+                        'rounded-xl', 'text-textdark', 'font-medium', 'text-lg', 'text-center',
+                        'hover:bg-optionborder', 'hover:shadow-md', 'transition-all', 'duration-200',
+                        'focus:outline-none', 'focus:ring-4', 'focus:ring-blue-200'
+                    );
+                    button.addEventListener('click', () => selectOption(button, option));
+                    optionsContainer.appendChild(button);
+                });
+                selectedOptionElement = null; // Reseta a opção selecionada
+                updateProgressBar(); // Atualiza a barra de progresso
+                showMotivationMessage(motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)], 'info');
+            } else {
+                // Todas as perguntas do módulo atual foram respondidas
+                showQuizEndScreen();
+            }
+        }
+
+        /**
+         * Manipula a seleção de uma opção pelo usuário.
+         * @param {HTMLElement} button - O botão da opção selecionada.
+         * @param {string} selectedAnswer - O texto da opção selecionada.
+         */
+        function selectOption(button, selectedAnswer) {
+            if (isAnswerChecked) {
+                return;
+            }
+            isAnswerChecked = true;
+
+            if (selectedOptionElement) {
+                selectedOptionElement.classList.remove('ring-4', 'ring-blue-300', 'bg-primary-light');
+            }
+
+            selectedOptionElement = button;
+            button.classList.add('ring-4', 'ring-blue-300', 'bg-primary-light');
+
+            setTimeout(() => checkAnswer(selectedAnswer), 300);
+        }
+
+        /**
+         * Verifica se a resposta selecionada está correta.
+         * @param {string} selectedAnswer - A resposta escolhida pelo aluno.
+         */
+        function checkAnswer(selectedAnswer) {
+            const currentQuestion = currentModule.quiz.questions[currentQuestionIndex];
+            const allOptionButtons = optionsContainer.querySelectorAll('button');
+
+            allOptionButtons.forEach(btn => btn.disabled = true);
+
+            if (selectedAnswer === currentQuestion.answer) {
+                score += 10;
+                streak += 1;
+                correctAnswersInModule++;
+                scoreDisplay.textContent = score;
+                streakDisplay.textContent = streak;
+                showMotivationMessage("🎉 Correto! Você ganhou 10 pontos e manteve seu streak!", "success");
+
+                if (selectedOptionElement) {
+                    selectedOptionElement.classList.remove('bg-optionbg', 'border-optionborder', 'ring-blue-300');
+                    selectedOptionElement.classList.add('bg-correct', 'border-bordercorrect', 'font-bold');
+                }
+            } else {
+                streak = 0;
+                incorrectAnswersInModule++;
+                streakDisplay.textContent = streak;
+                showMotivationMessage("😕 Resposta incorreta. Seu streak foi resetado. Tente novamente!", "error");
+
+                if (selectedOptionElement) {
+                    selectedOptionElement.classList.remove('bg-optionbg', 'border-optionborder', 'ring-blue-300');
+                    selectedOptionElement.classList.add('bg-wrong', 'border-borderwrong', 'font-bold');
+                }
+                allOptionButtons.forEach(btn => {
+                    if (btn.textContent === currentQuestion.answer) {
+                        btn.classList.remove('bg-optionbg', 'border-optionborder');
+                        btn.classList.add('bg-correct', 'border-bordercorrect', 'font-bold');
+                    }
+                });
+            }
+            nextQuestionButton.classList.remove('hidden');
+        }
+
+        /**
+         * Atualiza a barra de progresso do módulo e o texto.
+         */
+        function updateProgressBar() {
+            if (!currentModule || !currentModule.quiz) {
+                moduleProgressBar.style.width = `0%`;
+                moduleProgressText.textContent = `Nenhum Quiz Ativo`;
+                return;
+            }
+            const totalQuestionsInModule = currentModule.quiz.questions.length;
+            const progressInModule = (currentQuestionIndex / totalQuestionsInModule) * 100;
+            moduleProgressBar.style.width = `${progressInModule}%`;
+            moduleProgressText.textContent = `${currentQuestionIndex}/${totalQuestionsInModule} Perguntas`;
+        }
+
+        /**
+         * Avança para a próxima pergunta ou encerra o quiz do módulo.
+         */
+        function goToNextQuestion() {
+            currentQuestionIndex++;
+            loadQuestion();
+        }
+
+        /**
+         * Mostra a tela final do quiz para o módulo atual com o sumário de desempenho.
+         */
+        function showQuizEndScreen() {
+            showView(quizEndScreen);
+            finalScoreDisplay.textContent = score;
+
+            correctAnswersSummary.textContent = correctAnswersInModule;
+            incorrectAnswersSummary.textContent = incorrectAnswersInModule;
+
+            // Encontra o índice do módulo atual dentro da matéria para saber se é o último
+            const currentModuleIdxInSubject = currentSubject.modules.findIndex(mod => mod.id === currentModule.id);
+
+            if (currentModuleIdxInSubject === currentSubject.modules.length - 1) {
+                nextModuleButton.classList.add('hidden');
+                restartQuizButton.textContent = 'Tentar Novamente Este Módulo';
+            } else {
+                nextModuleButton.classList.remove('hidden');
+                restartQuizButton.textContent = 'Tentar Novamente Este Módulo';
+            }
+            backToSubjectsButton.classList.remove('hidden'); // Mantém o botão de voltar para matérias visível
+            activeModuleProgressSection.classList.add('hidden'); // Esconde a barra de progresso do módulo
+        }
+
+        /**
+         * Reinicia o quiz para o módulo atual.
+         */
+        function restartCurrentModuleQuiz() {
+            startQuiz(currentSubject.modules.findIndex(mod => mod.id === currentModule.id));
+        }
+
+        /**
+         * Avança para o próximo módulo.
+         */
+        function goToNextModule() {
+            const currentModuleIdxInSubject = currentSubject.modules.findIndex(mod => mod.id === currentModule.id);
+            if (currentModuleIdxInSubject < currentSubject.modules.length - 1) {
+                startQuiz(currentModuleIdxInSubject + 1);
+            } else {
+                // Se for o último módulo da matéria, volta para a lista de módulos
+                renderModules(currentSubject);
+            }
+        }
+
+        // --- Gerenciamento de Navegação ---
+
+        /**
+         * Navega de volta para a lista de matérias.
+         */
+        function navigateToSubjects() {
+            currentSubject = null;
+            currentModule = null;
+            renderSubjects();
+        }
+
+        /**
+         * Navega de volta para a lista de módulos da matéria atual.
+         */
+        function navigateToModules() {
+            if (currentSubject) {
+                renderModules(currentSubject);
+            } else {
+                navigateToSubjects(); // Se não há matéria selecionada, volta para a lista de matérias
+            }
+        }
+
+        // --- Adição de Event Listeners ---
+        nextQuestionButton.addEventListener('click', goToNextQuestion);
+        restartQuizButton.addEventListener('click', restartCurrentModuleQuiz);
+        nextModuleButton.addEventListener('click', goToNextModule);
+        backToSubjectsButton.addEventListener('click', navigateToSubjects);
+        backToSubjectsFromModulesButton.addEventListener('click', navigateToSubjects);
+        backToModulesFromMaterialButton.addEventListener('click', navigateToModules);
+        backToModulesFromQuizEndButton.addEventListener('click', navigateToModules);
+
+
+        // Início da aplicação: Carrega a lista de matérias
+        window.onload = () => {
+            renderSubjects();
+            showMotivationMessage(motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)], 'info');
+            scoreDisplay.textContent = score; // Garante que a pontuação inicial seja exibida
+            streakDisplay.textContent = streak; // Garante que o streak inicial seja exibido
+        };
+    </script>
+</body>
+</html>
